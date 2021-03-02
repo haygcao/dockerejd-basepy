@@ -1,18 +1,16 @@
-# File: .github/workflows/repo-sync.yml
-name: sync-gitee-docker
+name: 🔄do自动同步🔄
 on:
   schedule:
-    - cron: '1 0,15 * * *'
+    - cron: '0 0-23/1 * * *'
   workflow_dispatch:
   watch:
     types: started
-  push:
-    branches: [ master ]
   repository_dispatch:
-    types: sync-docker-jdbase
+    types: repo-sync
 jobs:
   repo-sync:
     env:
+      PAT: ${{ github.event.client_payload.PAT || secrets.PAT }} #此处PAT需要申请，教程详见：https://www.jianshu.com/p/bb82b3ad1d11
       dst_key: ${{ secrets.GITEE_PRIVATE_KEY }} # 我自己同步到gitee使用，其他人可忽略
     runs-on: ubuntu-latest
     if: github.event.repository.owner.id == github.event.sender.id
@@ -20,15 +18,16 @@ jobs:
       - uses: actions/checkout@v2
         with:
           persist-credentials: false
-          
-      # 我自己同步到gitee使用，其他人可忽略
-      - name: sync github -> gitee
-        uses: Yikun/hub-mirror-action@master
-        if: env.dst_key
+
+      - name: 开始🔄自动同步🔄
+        uses: repo-sync/github-sync@v2
+        if: env.PAT
         with:
-          src: github/dockere
-          dst: gitee/dockere
-          static_list: "jd-base"
-          dst_key: ${{ secrets.GITEE_PRIVATE_KEY }}
-          dst_token: ${{ secrets.GITEE_TOKEN }}
-          force_update: true
+          source_repo: "https://github.com/dockere/jd-base.git"
+          source_branch: "py"
+
+       
+
+          destination_branch: "py"
+
+          github_token: ${{ github.event.client_payload.PAT || secrets.PAT }}
